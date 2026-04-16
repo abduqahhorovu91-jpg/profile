@@ -1,0 +1,119 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg: #07111f;
+  --bg-soft: #0d1830;
+  --panel: rgba(14, 25, 46, 0.68);
+  --panel-strong: rgba(18, 31, 56, 0.92);
+  --line: rgba(255, 255, 255, 0.1);
+  --text: #f4f7fb;
+  --muted: #9eb0ca;
+  --accent: #6be7ff;
+  --accent-2: #8b5cf6;
+  --accent-3: #37f0b5;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.42);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(107, 231, 255, 0.14), transparent 28%),
+    radial-gradient(circle at 85% 18%, rgba(139, 92, 246, 0.16), transparent 24%),
+    radial-gradient(circle at 15% 75%, rgba(55, 240, 181, 0.12), transparent 24%),
+    linear-gradient(180deg, #07111f 0%, #040913 100%);
+  color: var(--text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(107, 231, 255, 0.6), rgba(139, 92, 246, 0.6));
+}
+
+@theme {
+  --color-app: var(--bg);
+  --color-app-soft: var(--bg-soft);
+  --color-panel: var(--panel);
+  --color-panel-strong: var(--panel-strong);
+  --color-line: var(--line);
+  --color-copy: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
+  --font-display: "Space Grotesk", sans-serif;
+  --shadow-float: var(--shadow);
+}
+
+@layer utilities {
+  .glass-panel {
+    background: rgba(14, 25, 46, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(24px);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #f8fbff 0%, #6be7ff 35%, #9d7bff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .surface-highlight {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .surface-highlight::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 35%, transparent 65%, rgba(107, 231, 255, 0.1));
+    pointer-events: none;
+  }
+
+  .safe-pb {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  .safe-bottom {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
