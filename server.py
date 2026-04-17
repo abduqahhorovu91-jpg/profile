@@ -17,6 +17,8 @@ SSL_CONTEXT = ssl.create_default_context()
 INSECURE_SSL_CONTEXT = ssl._create_unverified_context()
 MEDIA_UPLOAD_LOCK = threading.BoundedSemaphore(1)
 MAX_MEDIA_SIZE_BYTES = 20 * 1024 * 1024
+BASE_DIR = os.path.dirname(__file__)
+DIST_DIR = os.path.join(BASE_DIR, "dist")
 
 
 def load_env_file():
@@ -256,6 +258,24 @@ def parse_multipart_form(headers, body):
 
   return fields, file_part
 
+
+def get_static_file_path(request_path):
+  clean_path = urllib.parse.urlparse(request_path).path
+  relative_path = clean_path.lstrip("/") or "index.html"
+  candidate_path = os.path.normpath(os.path.join(DIST_DIR, relative_path))
+
+  if not candidate_path.startswith(os.path.abspath(DIST_DIR)):
+    return None
+
+  if os.path.isfile(candidate_path):
+    return candidate_path
+
+  index_path = os.path.join(DIST_DIR, "index.html")
+  if os.path.isfile(index_path):
+    return index_path
+
+  return None
+
 class Handler(BaseHTTPRequestHandler):
   def respond(self, status, payload):
     self.send_response(status)
@@ -266,6 +286,14 @@ class Handler(BaseHTTPRequestHandler):
     self.end_headers()
     self.wfile.write(json.dumps(payload).encode("utf-8"))
 
+  def respond_file(self, file_path):
+    mime_type, _ = mimetypes.guess_type(file_path)
+    self.send_response(200)
+    self.send_header("Content-Type", mime_type or "application/octet-stream")
+    self.end_headers()
+    with open(file_path, "rb") as file_handle:
+      self.wfile.write(file_handle.read())
+
   def do_OPTIONS(self):
     self.respond(204, {"ok": True})
 
@@ -273,6 +301,11 @@ class Handler(BaseHTTPRequestHandler):
     if self.path == "/api/health":
       configured = bool(os.getenv("TELEGRAM_BOT_TOKEN", ""))
       self.respond(200, {"ok": True, "configured": configured})
+      return
+
+    static_file_path = get_static_file_path(self.path)
+    if static_file_path:
+      self.respond_file(static_file_path)
       return
 
     self.respond(404, {"ok": False, "error": "Not found"})

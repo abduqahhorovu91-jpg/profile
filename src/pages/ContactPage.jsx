@@ -13,7 +13,7 @@ function getTelegramApiUrl() {
     return apiPath;
   }
 
-  return `${window.location.protocol}//${window.location.hostname}:8000${apiPath}`;
+  return `${window.location.origin}${apiPath}`;
 }
 
 function ContactPage() {
