@@ -1,6 +1,21 @@
 import { useRef, useState } from "react";
 import PageTransition from "../components/common/PageTransition";
 
+function getTelegramApiUrl() {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  const apiPath = "/api/telegram/send";
+
+  if (configuredBaseUrl) {
+    return `${configuredBaseUrl.replace(/\/$/, "")}${apiPath}`;
+  }
+
+  if (import.meta.env.DEV) {
+    return apiPath;
+  }
+
+  return `${window.location.protocol}//${window.location.hostname}:8000${apiPath}`;
+}
+
 function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
@@ -36,7 +51,7 @@ function ContactPage() {
       const data = await new Promise((resolve, reject) => {
         const request = new XMLHttpRequest();
         activeRequestRef.current = request;
-        request.open("POST", "/api/telegram/send");
+        request.open("POST", getTelegramApiUrl());
 
         request.upload.onprogress = (progressEvent) => {
           if (!progressEvent.lengthComputable) {

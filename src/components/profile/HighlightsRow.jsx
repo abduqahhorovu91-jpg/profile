@@ -1,5 +1,7 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { profile } from "../../data/projects";
+import { revealSoft, staggerItem, staggerParent } from "../../lib/motion";
 import { usePortfolioStore } from "../../store/usePortfolioStore";
 
 function HighlightsRow() {
@@ -76,16 +78,37 @@ function HighlightsRow() {
 
   return (
     <>
-      <div className="mb-6 flex gap-3 overflow-x-auto pb-2">
+      <motion.div
+        className="mb-6 flex gap-3 overflow-x-auto pb-2"
+        variants={staggerParent}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         {profile.highlights.map((item) => (
-          <button
+          <motion.button
             key={item.id}
             type="button"
             className="shrink-0 text-center"
             onClick={() => openHighlight(item)}
+            variants={staggerItem}
+            whileHover={{ y: -6, scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
           >
-            <div
+            <motion.div
               className={`mb-2 flex h-[4.9rem] w-[4.9rem] items-center justify-center rounded-full bg-gradient-to-br ${item.color} p-[2px]`}
+              animate={{
+                boxShadow: [
+                  "0 0 0 rgba(0,0,0,0)",
+                  "0 10px 30px rgba(69, 208, 255, 0.18)",
+                  "0 0 0 rgba(0,0,0,0)",
+                ],
+              }}
+              transition={{
+                duration: 5.5,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
             >
               <div className="flex h-full w-full items-center justify-center rounded-full bg-[#1b2230] p-[2px]">
                 <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-app-soft text-xs font-semibold">
@@ -101,24 +124,32 @@ function HighlightsRow() {
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
             <p className="text-xs text-muted">{item.label}</p>
-          </button>
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
 
-      {activeHighlight ? (
-        <button
-          type="button"
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/85 px-4 pt-6"
-          onClick={closeOverlay}
-        >
-          <div
-            className="w-full max-w-[27rem]"
-            onClick={(event) => event.stopPropagation()}
+      <AnimatePresence>
+        {activeHighlight ? (
+          <motion.button
+            type="button"
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/85 px-4 pt-6"
+            onClick={closeOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
+            <motion.div
+              className="w-full max-w-[27rem]"
+              onClick={(event) => event.stopPropagation()}
+              initial={{ opacity: 0, y: 34, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.98 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            >
             {activeHighlight.reels?.length ? (
-              <div className="relative aspect-[9/18] overflow-hidden rounded-[18px] bg-transparent">
+              <motion.div className="relative aspect-[9/18] overflow-hidden rounded-[18px] bg-transparent" {...revealSoft}>
                 <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(255,255,255,0.06)_100%)]" />
                 <video
                   key={activeHighlight.reels[activeReelIndex]}
@@ -156,11 +187,12 @@ function HighlightsRow() {
                 >
                   Back
                 </button>
-              </div>
+              </motion.div>
             ) : null}
-          </div>
-        </button>
-      ) : null}
+            </motion.div>
+          </motion.button>
+        ) : null}
+      </AnimatePresence>
 
       {allReels.map((reel, index) => (
         activeHighlight?.reels?.[activeReelIndex] === reel ? null : (

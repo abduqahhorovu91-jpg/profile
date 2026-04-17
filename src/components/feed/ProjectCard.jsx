@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Bookmark, Heart, MessageCircle, Send, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { revealSoft } from "../../lib/motion";
 import { formatCompactNumber } from "../../lib/utils";
 import { usePortfolioStore } from "../../store/usePortfolioStore";
 import LazyMedia from "../common/LazyMedia";
@@ -19,8 +20,9 @@ function ProjectCard({ project }) {
   return (
     <motion.article
       layout
-      whileHover={{ y: -4 }}
-      transition={{ type: "spring", stiffness: 220, damping: 22 }}
+      {...revealSoft}
+      whileHover={{ y: -8, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 180, damping: 22 }}
       className="glass-panel surface-highlight overflow-hidden rounded-[30px] p-3"
     >
       <Link to={`/project/${project.id}`} className="block">
@@ -28,7 +30,9 @@ function ProjectCard({ project }) {
           <div
             className={`absolute inset-0 z-10 bg-gradient-to-br ${project.accent} mix-blend-screen opacity-70`}
           />
-          <LazyMedia src={project.thumbnail} alt={project.title} className="h-72 w-full" />
+          <motion.div whileHover={{ scale: 1.035 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+            <LazyMedia src={project.thumbnail} alt={project.title} className="h-72 w-full" />
+          </motion.div>
           <div className="absolute inset-x-3 top-3 z-20 flex items-center justify-between">
             <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-white/85 backdrop-blur-md">
               Featured Build
