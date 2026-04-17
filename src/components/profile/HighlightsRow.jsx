@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { profile } from "../../data/projects";
 import { revealSoft, staggerItem, staggerParent } from "../../lib/motion";
 import { usePortfolioStore } from "../../store/usePortfolioStore";
@@ -9,11 +9,6 @@ function HighlightsRow() {
   const [activeReelIndex, setActiveReelIndex] = useState(0);
   const highlightOrder = profile.highlights;
   const setOverlayOpen = usePortfolioStore((state) => state.setOverlayOpen);
-  const preloadRefs = useRef([]);
-  const allReels = useMemo(
-    () => profile.highlights.flatMap((item) => item.reels ?? []),
-    [],
-  );
 
   const openHighlight = (item) => {
     setActiveHighlight(item);
@@ -67,15 +62,6 @@ function HighlightsRow() {
     setActiveHighlight(null);
     setOverlayOpen(false);
   };
-
-  useEffect(() => {
-    preloadRefs.current.forEach((video) => {
-      if (video) {
-        video.load();
-      }
-    });
-  }, [activeHighlight, allReels]);
-
   return (
     <>
       <motion.div
@@ -158,7 +144,7 @@ function HighlightsRow() {
                   autoPlay
                   onEnded={handleVideoEnded}
                   playsInline
-                  preload="auto"
+                  preload="metadata"
                   controls={false}
                   controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
                   disablePictureInPicture
@@ -193,21 +179,6 @@ function HighlightsRow() {
           </motion.button>
         ) : null}
       </AnimatePresence>
-
-      {allReels.map((reel, index) => (
-        activeHighlight?.reels?.[activeReelIndex] === reel ? null : (
-          <video
-            key={`preload-${reel}`}
-            ref={(element) => {
-              preloadRefs.current[index] = element;
-            }}
-            src={reel}
-            preload="auto"
-            muted
-            className="hidden"
-          />
-        )
-      ))}
     </>
   );
 }

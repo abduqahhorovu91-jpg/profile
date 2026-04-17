@@ -38,7 +38,14 @@ function ProjectGrid({ projects }) {
             <motion.button
               key={video.id}
               type="button"
-              onClick={() => setActiveVideo(video)}
+              onClick={() => {
+                if (video.kind === "instagram" && video.href) {
+                  window.open(video.href, "_blank", "noopener,noreferrer");
+                  return;
+                }
+
+                setActiveVideo(video);
+              }}
               className="group relative aspect-[0.72] overflow-hidden bg-black text-left"
               variants={staggerItem}
               whileHover={{ y: -6, scale: 1.01 }}
@@ -83,7 +90,7 @@ function ProjectGrid({ projects }) {
         </motion.div>
 
         <AnimatePresence>
-          {activeVideo ? (
+          {activeVideo && activeVideo.kind !== "instagram" ? (
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-3 py-6 backdrop-blur-sm"
               onClick={() => setActiveVideo(null)}
