@@ -1,4 +1,4 @@
-import cgi
+import io
 import http.client
 import json
 import mimetypes
@@ -8,6 +8,8 @@ import threading
 import urllib.error
 import urllib.parse
 import urllib.request
+from email.parser import BytesParser
+from email.policy import default
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -223,6 +225,37 @@ def get_file_size(file_obj):
   file_obj.seek(current_position, os.SEEK_SET)
   return size
 
+
+def parse_multipart_form(headers, body):
+  message = BytesParser(policy=default).parsebytes(
+    f"Content-Type: {headers.get('Content-Type', '')}\r\nMIME-Version: 1.0\r\n\r\n".encode("utf-8")
+    + body
+  )
+
+  fields = {}
+  file_part = None
+  for part in message.iter_parts():
+    if part.get_content_disposition() != "form-data":
+      continue
+
+    name = part.get_param("name", header="content-disposition")
+    if not name:
+      continue
+
+    filename = part.get_filename()
+    payload = part.get_payload(decode=True) or b""
+    if filename:
+      file_part = {
+        "field_name": name,
+        "filename": filename,
+        "mime_type": part.get_content_type() or "application/octet-stream",
+        "file": io.BytesIO(payload),
+      }
+    else:
+      fields[name] = payload.decode(part.get_content_charset() or "utf-8", errors="replace").strip()
+
+  return fields, file_part
+
 class Handler(BaseHTTPRequestHandler):
   def respond(self, status, payload):
     self.send_response(status)
@@ -260,29 +293,24 @@ class Handler(BaseHTTPRequestHandler):
       sticker = ""
       media_file = None
       media_mime_type = ""
+      content_length = int(self.headers.get("Content-Length", "0"))
 
       if "multipart/form-data" in content_type:
-        form = cgi.FieldStorage(
-          fp=self.rfile,
-          headers=self.headers,
-          environ={
-            "REQUEST_METHOD": "POST",
-            "CONTENT_TYPE": content_type,
-          },
+        form_fields, media_file = parse_multipart_form(
+          self.headers,
+          self.rfile.read(content_length),
         )
-        text = (form.getvalue("text") or "").strip()
-        sticker = (form.getvalue("sticker") or "").strip()
-        media_file = form["media"] if "media" in form else None
-        if media_file is not None and getattr(media_file, "file", None):
-          media_mime_type = media_file.type or "application/octet-stream"
+        text = form_fields.get("text", "")
+        sticker = form_fields.get("sticker", "")
+        if media_file is not None and media_file.get("file") is not None:
+          media_mime_type = media_file["mime_type"]
       else:
-        content_length = int(self.headers.get("Content-Length", "0"))
         payload = json.loads(self.rfile.read(content_length).decode("utf-8"))
         text = payload.get("text", "").strip()
         sticker = payload.get("sticker", "").strip()
 
-      if media_file is not None and getattr(media_file, "file", None):
-        file_size = get_file_size(media_file.file)
+      if media_file is not None and media_file.get("file") is not None:
+        file_size = get_file_size(media_file["file"])
         if file_size > MAX_MEDIA_SIZE_BYTES:
           raise ValueError("Media file is too large. Please upload a file under 20 MB.")
 
@@ -296,7 +324,7 @@ class Handler(BaseHTTPRequestHandler):
           )
           return
 
-        filename = media_file.filename or "upload"
+        filename = media_file["filename"] or "upload"
         extension = mimetypes.guess_extension(media_mime_type) or os.path.splitext(filename)[1]
         safe_filename = filename if os.path.splitext(filename)[1] else f"upload{extension or ''}"
 
@@ -309,7 +337,7 @@ class Handler(BaseHTTPRequestHandler):
                 "field_name": "photo",
                 "filename": safe_filename,
                 "mime_type": media_mime_type,
-                "file": media_file.file,
+                "file": media_file["file"],
                 "size": file_size,
               },
             )
@@ -321,7 +349,7 @@ class Handler(BaseHTTPRequestHandler):
                 "field_name": "video",
                 "filename": safe_filename,
                 "mime_type": media_mime_type,
-                "file": media_file.file,
+                "file": media_file["file"],
                 "size": file_size,
               },
             )
