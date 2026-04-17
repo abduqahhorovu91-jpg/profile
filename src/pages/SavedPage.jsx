@@ -1,5 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import PageTransition from "../components/common/PageTransition";
 import { creativityImages } from "../data/creativityImages";
 
@@ -35,34 +34,20 @@ const ctas = [
 ];
 
 function SavedPage() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % creativityImages.length);
-    }, 3200);
-
-    return () => window.clearInterval(interval);
-  }, []);
-
   return (
     <PageTransition>
       <section className="flex justify-center pt-4">
         <div className="w-[96%] space-y-4">
           <div className="glass-panel relative overflow-hidden rounded-[28px] border border-white/12 p-3">
             <div className="relative aspect-[1.45] overflow-hidden rounded-[24px]">
-              <AnimatePresence mode="sync">
-                <motion.img
-                  key={creativityImages[activeIndex]}
-                  src={creativityImages[activeIndex]}
-                  alt={`Creativity slide ${activeIndex + 1}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1.6, ease: "easeInOut" }}
-                  className="absolute inset-0 h-full w-full object-contain"
-                />
-              </AnimatePresence>
+              <motion.img
+                src={creativityImages[0]}
+                alt="Creativity preview"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35, ease: "easeInOut" }}
+                className="absolute inset-0 h-full w-full object-contain"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-app/24 via-transparent to-white/6" />
             </div>
           </div>
