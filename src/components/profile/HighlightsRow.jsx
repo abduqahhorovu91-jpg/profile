@@ -142,6 +142,7 @@ function HighlightsRow() {
                   src={activeHighlight.reels[activeReelIndex]}
                   className="h-full w-full object-contain"
                   autoPlay
+                  muted
                   onEnded={handleVideoEnded}
                   playsInline
                   preload="metadata"
