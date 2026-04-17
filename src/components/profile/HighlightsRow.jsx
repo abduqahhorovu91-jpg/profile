@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { Play } from "lucide-react";
 import { useState } from "react";
 import { profile } from "../../data/projects";
 import { revealSoft, staggerItem, staggerParent } from "../../lib/motion";
@@ -7,12 +8,16 @@ import { usePortfolioStore } from "../../store/usePortfolioStore";
 function HighlightsRow() {
   const [activeHighlight, setActiveHighlight] = useState(null);
   const [activeReelIndex, setActiveReelIndex] = useState(0);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   const highlightOrder = profile.highlights;
   const setOverlayOpen = usePortfolioStore((state) => state.setOverlayOpen);
 
   const openHighlight = (item) => {
     setActiveHighlight(item);
     setActiveReelIndex(0);
+    setIsVideoReady(false);
+    setShouldLoadVideo(false);
     setOverlayOpen(true);
   };
 
@@ -21,6 +26,8 @@ function HighlightsRow() {
       return;
     }
 
+    setIsVideoReady(false);
+    setShouldLoadVideo(false);
     setActiveReelIndex((current) =>
       current === 0 ? activeHighlight.reels.length - 1 : current - 1,
     );
@@ -31,6 +38,8 @@ function HighlightsRow() {
       return;
     }
 
+    setIsVideoReady(false);
+    setShouldLoadVideo(false);
     setActiveReelIndex((current) =>
       current === activeHighlight.reels.length - 1 ? 0 : current + 1,
     );
@@ -43,6 +52,8 @@ function HighlightsRow() {
 
     const isLastReel = activeReelIndex === activeHighlight.reels.length - 1;
     if (!isLastReel) {
+      setIsVideoReady(false);
+      setShouldLoadVideo(false);
       setActiveReelIndex((current) => current + 1);
       return;
     }
@@ -55,11 +66,15 @@ function HighlightsRow() {
     if (nextHighlight?.reels?.length) {
       setActiveHighlight(nextHighlight);
       setActiveReelIndex(0);
+      setIsVideoReady(false);
+      setShouldLoadVideo(false);
     }
   };
 
   const closeOverlay = () => {
     setActiveHighlight(null);
+    setIsVideoReady(false);
+    setShouldLoadVideo(false);
     setOverlayOpen(false);
   };
   return (
@@ -78,23 +93,11 @@ function HighlightsRow() {
             className="shrink-0 text-center"
             onClick={() => openHighlight(item)}
             variants={staggerItem}
-            whileHover={{ y: -6, scale: 1.03 }}
+            whileHover={{ y: -2 }}
             whileTap={{ scale: 0.97 }}
           >
             <motion.div
               className={`mb-2 flex h-[4.9rem] w-[4.9rem] items-center justify-center rounded-full bg-gradient-to-br ${item.color} p-[2px]`}
-              animate={{
-                boxShadow: [
-                  "0 0 0 rgba(0,0,0,0)",
-                  "0 10px 30px rgba(69, 208, 255, 0.18)",
-                  "0 0 0 rgba(0,0,0,0)",
-                ],
-              }}
-              transition={{
-                duration: 5.5,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeInOut",
-              }}
             >
               <div className="flex h-full w-full items-center justify-center rounded-full bg-[#1b2230] p-[2px]">
                 <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-app-soft text-xs font-semibold">
@@ -137,19 +140,48 @@ function HighlightsRow() {
             {activeHighlight.reels?.length ? (
               <motion.div className="relative aspect-[9/18] overflow-hidden rounded-[18px] bg-transparent" {...revealSoft}>
                 <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(255,255,255,0.06)_100%)]" />
-                <video
-                  key={activeHighlight.reels[activeReelIndex]}
-                  src={activeHighlight.reels[activeReelIndex]}
-                  className="h-full w-full object-contain"
-                  autoPlay
-                  muted
-                  onEnded={handleVideoEnded}
-                  playsInline
-                  preload="metadata"
-                  controls={false}
-                  controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
-                  disablePictureInPicture
-                />
+                {shouldLoadVideo ? (
+                  <video
+                    key={activeHighlight.reels[activeReelIndex]}
+                    src={activeHighlight.reels[activeReelIndex]}
+                    className={`h-full w-full object-contain transition-opacity duration-200 ${
+                      isVideoReady ? "opacity-100" : "opacity-0"
+                    }`}
+                    autoPlay
+                    muted
+                    onCanPlay={() => setIsVideoReady(true)}
+                    onEnded={handleVideoEnded}
+                    playsInline
+                    preload="metadata"
+                    controls
+                    controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
+                    disablePictureInPicture
+                  />
+                ) : null}
+                {!shouldLoadVideo ? (
+                  <button
+                    type="button"
+                    className="absolute inset-0 z-20 flex items-center justify-center bg-black/55"
+                    onClick={() => setShouldLoadVideo(true)}
+                  >
+                    <div className="flex flex-col items-center gap-4">
+                      <img
+                        src={activeHighlight.image}
+                        alt={activeHighlight.label}
+                        className="h-full max-h-[70vh] w-full max-w-full object-contain opacity-70"
+                        loading="eager"
+                      />
+                      <span className="absolute flex h-16 w-16 items-center justify-center rounded-full bg-white text-black shadow-xl">
+                        <Play size={28} className="translate-x-[2px] fill-current" />
+                      </span>
+                    </div>
+                  </button>
+                ) : null}
+                {shouldLoadVideo && !isVideoReady ? (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 text-sm text-white/85">
+                    Loading...
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   aria-label="Previous reel"
